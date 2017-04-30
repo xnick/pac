@@ -107,6 +107,7 @@ def present(entries: List[dict]):
     CBOLD: str = '\33[1m'
     CBLACK: str = '\33[30m'
     CVIOLET: str = '\33[35m'
+    CBLUE2: str = '\33[94m'
     CGREEN2: str = '\33[92m'
     CYELLOW2: str = '\33[93m'
     CVIOLET2: str = '\33[95m'
@@ -117,7 +118,7 @@ def present(entries: List[dict]):
         padding = len(str(index + 1))
         print(f"{CBLACK}{CYELLOWBG}{index + 1}{CEND} {CVIOLET2}{entry['repo']}/{CEND}{CBOLD}{entry['package']}{CEND} {CGREEN2}{entry['version']}{CEND}", end='')
         if entry['group']:
-            print(f" ({entry['group']})", end='')
+            print(f" {CBLUE2}({entry['group']}){CEND}", end='')
         if entry['status']:
             print(f" {CBLACK}{CYELLOWBG2}[{entry['status']}]{CEND}", end='')
         if entry['votes']:
