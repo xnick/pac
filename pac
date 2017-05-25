@@ -194,7 +194,7 @@ if __name__ == '__main__':
                 entries = search(' '.join(sys.argv[1:]))
                 if len(entries) > 0:
                     present(entries)
-                    numbers = parse_num(input('\33[93m==>\33[0m '))
+                    numbers = parse_num(input('\33[93m==>\33[0m ').strip())
                     install(numbers, entries)
                 else:
                     print('Nothing found.')
