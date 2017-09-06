@@ -79,12 +79,14 @@ def search(search_term: str) -> List[dict]:
                 r'(?P<repo>.+?)/(?P<package>.+?)'
                 r' (?P<version>[^ ]+)'
                 # Optional parts
+                r'(?P<outdated> <!>)?'
                 r'( \((?P<votes>[0-9]+), (?P<popularity>.+?)\))?'
                 r'( \((?P<group>.+?)\))?'
                 r'( \[(?P<status>.+?)\])?'
             )
             m = re.match(pattern, line)
             entry.update(m.groupdict())
+            entry['outdated'] = bool(entry['outdated'])
     return result
 
 
@@ -107,6 +109,7 @@ def present(entries: List[dict]):
     CBOLD: str = '\33[1m'
     CBLACK: str = '\33[30m'
     CVIOLET: str = '\33[35m'
+    CRED2: str = '\33[91m'
     CBLUE2: str = '\33[94m'
     CGREEN2: str = '\33[92m'
     CYELLOW2: str = '\33[93m'
@@ -116,7 +119,16 @@ def present(entries: List[dict]):
 
     for index, entry in enumerate(entries):
         padding = len(str(index + 1))
-        print(f"{CBLACK}{CYELLOWBG}{index + 1}{CEND} {CVIOLET2}{entry['repo']}/{CEND}{CBOLD}{entry['package']}{CEND} {CGREEN2}{entry['version']}{CEND}", end='')
+        if entry["outdated"]:
+            version_color = CRED2
+        else:
+            version_color = CGREEN2
+        print(
+            f"{CBLACK}{CYELLOWBG}{index + 1}{CEND}"
+            f" {CVIOLET2}{entry['repo']}/{CEND}{CBOLD}{entry['package']}{CEND}"
+            f" {version_color}{entry['version']}{CEND}",
+            end=''
+        )
         if entry['group']:
             print(f" {CBLUE2}({entry['group']}){CEND}", end='')
         if entry['status']:
