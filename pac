@@ -6,13 +6,13 @@ pac - wrapper around pacaur to mimic yaourts search feature
 Usage:
   pac
   pac <search_pattern>...
-  pac (-a | --autoremove)
+  pac (--autoremove)
   pac (-h | --help)
   pac (-v | --version)
   pac <pacaur arguments>...
 
 Options:
-  -a, --autoremove  Removes orphan packages
+  --autoremove  Removes orphan packages
   -h, --help        Display this help
   -v, --version     Display version information
 
@@ -185,68 +185,56 @@ def process_results(entries: List[dict], pacaur_args: str):
     """
     Displays the search results and calls install for the entered numbers
     """
-    try:
-        if len(entries) > 0:
-            present(entries)
-            numbers = parse_num(input('\33[93m==>\33[0m ').strip())
-            install(numbers, entries, pacaur_args)
-        else:
-            print('Nothing found.')
-    except KeyboardInterrupt:
-        pass
+    if len(entries) > 0:
+        present(entries)
+        numbers = parse_num(input('\33[93m==>\33[0m ').strip())
+        install(numbers, entries, pacaur_args)
+    else:
+        print('Nothing found.')
 
 
 if __name__ == '__main__':
     try:
-        # print(sys.argv)
         passthrough_flags=['-D', '-F', '-Q', '-R', '-S', '-T', '-U']
+
+        # Re: removing -a, it shadows a pacaur flag
+        # also if the user really means it, he can go the extra mile
+        local_flags=['-h', '--help', '-v', '--version', '--autoremove']
 
         # Check if we are passing straight through to pacaur
         # don't get confused by combined flags([:2])
         if [i for i in sys.argv if i[:2] in passthrough_flags]:
             cmd = f'pacaur {" ".join(sys.argv[1:])}'
             call(cmd, shell=True)
-        
-        elif len(sys.argv) == 1:
-            call('pacaur -Syu', shell=True)
-        
-        elif len(sys.argv) == 2:
-            # Search, -h, -v, -a or --noedit
-            if '--noedit' in sys.argv[1]:
-                call('pacaur -Syu --noedit', shell=True)
-            elif '--noconfirm' in sys.argv[1]:
-                call('pacaur -Syu --noconfirm', shell=True)
-            elif '-h' in sys.argv[1] or '--help' in sys.argv[1:]:
+        # Check if any local flags need addressing
+        elif [i for i in sys.argv if i in local_flags]:
+            if '-h' in sys.argv or '--help' in sys.argv:
                 print(__doc__)
-            elif '-v' in sys.argv[1] or '--version' in sys.argv[1:]:
+                # Since we are passing flags to pacaur, 
+                # might as well include that help message
+                print('Pacaur:')
+                call('pacaur -h', shell=True)
+            elif '-v' in sys.argv or '--version' in sys.argv:
                 print('pac v%s' % __version__)
-            elif '-a' in sys.argv[1] or '--autoremove' in sys.argv[1:]:
+            elif '--autoremove' in sys.argv[1:]:
                 # TODO: add warning
                 autoremove()
-            else:
-                # Single search term, no extra flags
-                entries = search(' '.join(sys.argv[1:]))
-                process_results(entries, "")
-        
-        elif len(sys.argv) >= 3:
+        else:
+            # We now only have to handle our own functionality
             # Filter out pacaur flags
             pacaur_args=[]
             for arg in sys.argv[1:]:
                 if arg.startswith('-'):
                     pacaur_args.append(arg)
                     sys.argv.remove(arg)
-            # print("Searching for: " + str(sys.argv[1:]))
+            # print("Searching for: " + " ".join(sys.argv[1:]))
             # print("pacaur flags: " + " ".join(pacaur_args))
             if sys.argv[1:]:
                 # There are arguments left, search!
                 entries = search(' '.join(sys.argv[1:]))
                 process_results(entries, " ".join(pacaur_args))
             else:
-                # Nothing left, update with flags
+                # Nothing left, update
                 call('pacaur -Syu' + " " + " ".join(pacaur_args), shell=True)
-
-
-        else:
-            print("What did I miss?")
     except KeyboardInterrupt:
         pass
