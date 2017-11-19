@@ -122,7 +122,7 @@ def present(entries: List[dict]):
     CYELLOWBG: str = '\33[43m'
     CYELLOWBG2: str = '\33[103m'
 
-    for index, entry in enumerate(entries):
+    for index, entry in reversed(list(enumerate(entries))):
         padding = len(str(index + 1))
         print(f"{CBLACK}{CYELLOWBG}{index + 1}{CEND} {CVIOLET2}{entry['repo']}/{CEND}{CBOLD}{entry['package']}{CEND} {CGREEN2}{entry['version']}{CEND}", end='')
         if entry['group']:
@@ -164,7 +164,7 @@ def parse_num(numbers: str) -> List[int]:
 
 def install(numbers: List[int], packages: List[dict]):
     """
-    Gets the chosen packages and concatinates them. Then executes the pacaur command with the packages to install them.
+    Gets the chosen packages and concatenates them. Then executes the pacaur command with the packages to install them.
     """
     names = [packages[i]['package'] for i in numbers]
     call(f'pacaur -S {" ".join(names)}', shell=True)
@@ -179,27 +179,27 @@ def autoremove():
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        if '-h' in sys.argv[1:] or '--help' in sys.argv[1:]:
-            print(__doc__)
-        elif '-v' in sys.argv[1:] or '--version' in sys.argv[1:]:
-            print('pac v%s' % __version__)
-        elif '-a' in sys.argv[1:] or '--autoremove' in sys.argv[1:]:
-            # TODO: add warning
-            autoremove()
-        elif sys.argv[1][:2] in ['-D', '-F', '-Q', '-R', '-S', '-T', '-U']:
-            call(f'pacaur {" ".join(sys.argv[1:])}', shell=True)
+    try:
+        if len(sys.argv) > 1:
+            if '-h' in sys.argv[1:] or '--help' in sys.argv[1:]:
+                print(__doc__)
+            elif '-v' in sys.argv[1:] or '--version' in sys.argv[1:]:
+                print('pac v%s' % __version__)
+            elif '-a' in sys.argv[1:] or '--autoremove' in sys.argv[1:]:
+                # TODO: add warning
+                autoremove()
+            elif sys.argv[1][:2] in ['-D', '-F', '-Q', '-R', '-S', '-T', '-U']:
+                call(f'pacaur {" ".join(sys.argv[1:])}', shell=True)
+            else:
+                    entries = search(' '.join(sys.argv[1:]))
+                    if len(entries) > 0:
+                        present(entries)
+                        numbers = parse_num(input('\33[93m==>\33[0m ').strip())
+                        install(numbers, entries)
+                    else:
+                        print('Nothing found.')
         else:
-            try:
-                entries = search(' '.join(sys.argv[1:]))
-                if len(entries) > 0:
-                    present(entries)
-                    numbers = parse_num(input('\33[93m==>\33[0m ').strip())
-                    install(numbers, entries)
-                else:
-                    print('Nothing found.')
-            except KeyboardInterrupt:
-                pass
-    else:
-        call('pacaur -Syu', shell=True)
+            call('pacaur -Syu', shell=True)
+    except KeyboardInterrupt:
+        pass
 
