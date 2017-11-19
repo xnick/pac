@@ -162,12 +162,15 @@ def parse_num(numbers: str) -> List[int]:
     return result
 
 
-def install(numbers: List[int], packages: List[dict]):
+def install(numbers: List[int], packages: List[dict], noedit: bool):
     """
     Gets the chosen packages and concatenates them. Then executes the pacaur command with the packages to install them.
     """
     names = [packages[i]['package'] for i in numbers]
-    call(f'pacaur -S {" ".join(names)}', shell=True)
+    cmd = f'pacaur -S {" ".join(names)}'
+    if noedit:
+        cmd += " --noedit"
+    call(cmd, shell=True)
 
 
 def autoremove():
@@ -178,28 +181,55 @@ def autoremove():
         call(f'pacaur -Rs {" ".join(orphans)}', shell=True)
 
 
-if __name__ == '__main__':
+def process_results(entries: List[dict], noedit: bool):
+    """
+    Displays the search results and calls install for the entered numbers
+    """
     try:
-        if len(sys.argv) > 1:
-            if '-h' in sys.argv[1:] or '--help' in sys.argv[1:]:
-                print(__doc__)
-            elif '-v' in sys.argv[1:] or '--version' in sys.argv[1:]:
-                print('pac v%s' % __version__)
-            elif '-a' in sys.argv[1:] or '--autoremove' in sys.argv[1:]:
-                # TODO: add warning
-                autoremove()
-            elif sys.argv[1][:2] in ['-D', '-F', '-Q', '-R', '-S', '-T', '-U']:
-                call(f'pacaur {" ".join(sys.argv[1:])}', shell=True)
-            else:
-                    entries = search(' '.join(sys.argv[1:]))
-                    if len(entries) > 0:
-                        present(entries)
-                        numbers = parse_num(input('\33[93m==>\33[0m ').strip())
-                        install(numbers, entries)
-                    else:
-                        print('Nothing found.')
+        if len(entries) > 0:
+            present(entries)
+            numbers = parse_num(input('\33[93m==>\33[0m ').strip())
+            install(numbers, entries, noedit)
         else:
-            call('pacaur -Syu', shell=True)
+            print('Nothing found.')
     except KeyboardInterrupt:
         pass
 
+
+if __name__ == '__main__':
+    try:
+        if len(sys.argv) == 1:
+            call('pacaur -Syu', shell=True)
+
+        elif len(sys.argv) == 2:
+            # Search, -h, -v, -a or --noedit
+            if '--noedit' in sys.argv[1]:
+                call('pacaur -Syu --noedit', shell=True)
+            elif '-h' in sys.argv[1] or '--help' in sys.argv[1:]:
+                print(__doc__)
+            elif '-v' in sys.argv[1] or '--version' in sys.argv[1:]:
+                print('pac v%s' % __version__)
+            elif '-a' in sys.argv[1] or '--autoremove' in sys.argv[1:]:
+                # TODO: add warning
+                autoremove()
+            elif sys.argv[1][:2] in ['-D', '-F', '-Q', '-R', '-S', '-T', '-U']:
+                cmd = f'pacaur {" ".join(sys.argv[1:])}'
+                call(cmd, shell=True)
+            else:
+                entries = search(' '.join(sys.argv[1:]))
+                process_results(entries, False)
+
+        elif len(sys.argv) == 3:
+            # Search with --noedit, -S <package> or --noedit -Syu
+            if sys.argv[1][:2] in ['-D', '-F', '-Q', '-R', '-S', '-T', '-U'] or sys.argv[2][:2] in ['-D', '-F', '-Q', '-R', '-S', '-T', '-U']:
+                cmd = f'pacaur {" ".join(sys.argv[1:])}'
+                call(cmd, shell=True)
+            else:
+                entries = search(' '.join(sys.argv[2:]))
+                process_results(entries, True)
+        else:
+            # --noedit -S
+            cmd = f'pacaur {" ".join(sys.argv[1:])}'
+            call(cmd, shell=True)
+    except KeyboardInterrupt:
+        pass
