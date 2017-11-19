@@ -169,7 +169,7 @@ def install(numbers: List[int], packages: List[dict], pacaur_args: str):
     names = [packages[i]['package'] for i in numbers]
     cmd = f'pacaur -S {" ".join(names)}'
     cmd += " " + pacaur_args
-    print("Final command: " + cmd)
+    # print("Final command: " + cmd)
     call(cmd, shell=True)
 
 
@@ -234,8 +234,8 @@ if __name__ == '__main__':
                     if arg.startswith('-'):
                         pacaur_args.append(arg)
                         sys.argv.remove(arg)
-                print("Searching for: " + str(sys.argv[1:]))
-                print("pacaur flags: " + " ".join(pacaur_args))
+                # print("Searching for: " + str(sys.argv[1:]))
+                # print("pacaur flags: " + " ".join(pacaur_args))
                 entries = search(' '.join(sys.argv[1:]))
                 process_results(entries, " ".join(pacaur_args))
         else:
