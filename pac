@@ -198,9 +198,18 @@ def process_results(entries: List[dict], pacaur_args: str):
 
 if __name__ == '__main__':
     try:
-        if len(sys.argv) == 1:
-            call('pacaur -Syu', shell=True)
+        # print(sys.argv)
+        passthrough_flags=['-D', '-F', '-Q', '-R', '-S', '-T', '-U']
 
+        # Check if we are passing straight through to pacaur
+        # don't get confused by combined flags([:2])
+        if [i for i in sys.argv if i[:2] in passthrough_flags]:
+            cmd = f'pacaur {" ".join(sys.argv[1:])}'
+            call(cmd, shell=True)
+        
+        elif len(sys.argv) == 1:
+            call('pacaur -Syu', shell=True)
+        
         elif len(sys.argv) == 2:
             # Search, -h, -v, -a or --noedit
             if '--noedit' in sys.argv[1]:
@@ -214,30 +223,29 @@ if __name__ == '__main__':
             elif '-a' in sys.argv[1] or '--autoremove' in sys.argv[1:]:
                 # TODO: add warning
                 autoremove()
-            elif sys.argv[1][:2] in ['-D', '-F', '-Q', '-R', '-S', '-T', '-U']:
-                cmd = f'pacaur {" ".join(sys.argv[1:])}'
-                call(cmd, shell=True)
             else:
                 # Single search term, no extra flags
                 entries = search(' '.join(sys.argv[1:]))
                 process_results(entries, "")
-
+        
         elif len(sys.argv) >= 3:
-            if sys.argv[1][:2] in ['-D', '-F', '-Q', '-R', '-S', '-T', '-U'] or sys.argv[2][:2] in ['-D', '-F', '-Q', '-R', '-S', '-T', '-U']:
-                # Passthrough, user knows what he wants
-                cmd = f'pacaur {" ".join(sys.argv[1:])}'
-                call(cmd, shell=True)
-            else:
-                # Filter out pacaur flags
-                pacaur_args=[]
-                for arg in sys.argv[1:]:
-                    if arg.startswith('-'):
-                        pacaur_args.append(arg)
-                        sys.argv.remove(arg)
-                # print("Searching for: " + str(sys.argv[1:]))
-                # print("pacaur flags: " + " ".join(pacaur_args))
+            # Filter out pacaur flags
+            pacaur_args=[]
+            for arg in sys.argv[1:]:
+                if arg.startswith('-'):
+                    pacaur_args.append(arg)
+                    sys.argv.remove(arg)
+            # print("Searching for: " + str(sys.argv[1:]))
+            # print("pacaur flags: " + " ".join(pacaur_args))
+            if sys.argv[1:]:
+                # There are arguments left, search!
                 entries = search(' '.join(sys.argv[1:]))
                 process_results(entries, " ".join(pacaur_args))
+            else:
+                # Nothing left, update with flags
+                call('pacaur -Syu' + " " + " ".join(pacaur_args), shell=True)
+
+
         else:
             print("What did I miss?")
     except KeyboardInterrupt:
